@@ -48,11 +48,12 @@ def load_auth_config(auth_type,str):
         token = str
         configuration = client.Configuration()
         configuration.host = "https://8.142.204.130:6443"  # APISERVER地址
-        configuration.ssl_ca_cert = r"C:\Users\chenyang\PycharmProjects\devops\ca.crt"
+        configuration.ssl_ca_cert = os.path.join('kubeconfig', 'ca.crt')
         configuration.verify_ssl = True  # 启用证书验证
         configuration.api_key = {"authorization": "Bearer " + token}  # 指定Token字符串
         client.Configuration.set_default(configuration)
     elif auth_type =='kubeconfig':
         random_str = str
+        print("下面输出的是random_str %s"%random_str)
         file_path = os.path.join('kubeconfig', random_str)
-        config.load_kube_config(r"%s" % file_path)
+        config.load_kube_config(r"%s"  %file_path)

@@ -78,11 +78,13 @@ def namespace_api(request):
         except Exception as e:
             print(e)
             code=1
-            # status=getattr(e,'status')
-            # if status == 403:
-            #     msg='没有访问权限'
-            # else:
-            #     msg='获取数据失败'
+            status=getattr(e,'status')
+            if status == 403:
+                msg='没有访问权限'
+            elif status == 401:
+                msg='身份验证失败'
+            else:
+                msg='获取数据失败'
         count=len(data)
         res={'code':code,'msg':msg,'count':count,'data':data}
         return JsonResponse(res)
