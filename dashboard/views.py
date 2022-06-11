@@ -14,7 +14,6 @@ def login(request):
     elif request.method == "POST":
         token = request.POST.get("token", None)
         if token:
-            print(token)
             if k8s.auth_check('token', token):
                 request.session['is_login'] = True
                 request.session['auth_type'] = 'token'
@@ -41,9 +40,8 @@ def login(request):
             if k8s.auth_check('kubeconfig', random_str):
                 print('random_str: %s' %random)
                 request.session['is_login'] = True
-                request.session['auth_type'] = 'token'
+                request.session['auth_type'] = 'kubeconfig'
                 request.session['token'] = random_str
-                print('random_str: %s'%random_str)
                 code = 0
                 msg = "认证成功"
             else:
@@ -53,15 +51,13 @@ def login(request):
         return JsonResponse(res)
 
 
-
 def namespace_api(request):
     if request.method == 'GET':
         code =0
         msg=''
         auth_type= request.session.get('auth_type')
+        print('下面是输出auth_type   %s'%auth_type)
         token=request.session.get('token')
-        print("=======")
-        print(auth_type,token)
         k8s.load_auth_config(auth_type,token)
         core_api=client.CoreV1Api()
         data=[]
@@ -88,8 +84,6 @@ def namespace_api(request):
         count=len(data)
         res={'code':code,'msg':msg,'count':count,'data':data}
         return JsonResponse(res)
-
-
 def logout(request):
     request.session.flush()
     return redirect(index)

@@ -200,7 +200,7 @@
             })
         } else if ($("#ss2").hasClass("ss")) {
             var fd = new FormData();
-            // var file = $("input[name='kubeconfig']")[0].files[0]);
+         //    var file = $("input[name='kubeconfig']")[0].files[0];
             var file = $("#kubeconfig")[0].files[0];
             if (! file) {
                 $("#notice").html("请选择kubeconfig文件！").css("color", "red");

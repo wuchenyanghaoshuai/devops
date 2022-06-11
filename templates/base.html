@@ -135,8 +135,7 @@ layui.use(['element', 'layer', 'util'], function(){
               $("#nsSelect").val('default')
 
           }else {
-              layer.msg(res.msg)
-
+              $("#nsSelect").prepend('<option value='+ res.msg+'>'+ res.msg+'</option>')
           }
       },
       error: function (){
