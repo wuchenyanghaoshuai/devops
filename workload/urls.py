@@ -15,15 +15,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path,re_path,include
-from dashboard import views
+from workload import views
 
 urlpatterns = [
-#    path('admin/', admin.site.urls),
-    re_path('^$',views.index),
-    re_path('login/$',views.login),
-    re_path('namespace_api/$',views.namespace_api,name='namespace_api'),
-    re_path('logout/$',views.logout),
-    re_path('namespace/$',views.namespace,name='namespace'),
-    re_path('kubernetes/',include('k8s.urls')),
-    re_path('workload/',include('workload.urls')),
+    re_path('deployment/',views.deployment,name='deployment'),
 ]

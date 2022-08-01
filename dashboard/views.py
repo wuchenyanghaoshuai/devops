@@ -1,5 +1,5 @@
 from django.shortcuts import render,redirect
-from django.http import  JsonResponse
+from django.http import  JsonResponse,QueryDict
 from  kubernetes import config,client
 import os,hashlib,random
 from devops import  k8s
@@ -30,15 +30,12 @@ def login(request):
             try:
                 with open(file_path, 'w') as f:
                     data = file_obj.read().decode('UTF-8')  # bytes转str
-                    print(type(data))
-                    print(data)
                     f.write(data)
             except Exception as e :
                 print(e)
                 code = 1
                 msg = "文件类型错误！"
             if k8s.auth_check('kubeconfig', random_str):
-                print('random_str: %s' %random)
                 request.session['is_login'] = True
                 request.session['auth_type'] = 'kubeconfig'
                 request.session['token'] = random_str
@@ -56,19 +53,24 @@ def namespace_api(request):
         code =0
         msg=''
         auth_type= request.session.get('auth_type')
-        print('下面是输出auth_type   %s'%auth_type)
         token=request.session.get('token')
         k8s.load_auth_config(auth_type,token)
         core_api=client.CoreV1Api()
+        search_key=request.GET.get('search_key')
         data=[]
         try:
             for ns in core_api.list_namespace().items:
                 name=ns.metadata.name
                 labels=ns.metadata.labels
                 create_time=ns.metadata.creation_timestamp
-                print(ns.metadata.name)
+
                 namespace={'name':name,'labels':labels,'create_time':create_time}
-                data.append(namespace)
+                #根据指定key来进行搜索namespace
+                if search_key:
+                    if search_key in name:
+                        data.append(namespace)
+                else:
+                    data.append(namespace)
                 code =0
                 msg='获取数据成功'
         except Exception as e:
@@ -82,8 +84,40 @@ def namespace_api(request):
             else:
                 msg='获取数据失败'
         count=len(data)
+        #分页
+        if request.GET.get('page'):
+            page=int(request.GET.get('page',1))
+            limit=int(request.GET.get('limit'))
+            start=(page-1)*limit
+            end=page*limit
+            data=data[start:end]
         res={'code':code,'msg':msg,'count':count,'data':data}
+        return JsonResponse(res)
+    elif request.method =='DELETE':
+        auth_type= request.session.get('auth_type')
+        token=request.session.get('token')
+        k8s.load_auth_config(auth_type,token)
+        request_data=QueryDict(request.body)
+        name=request_data.get('name')
+        core_api = client.CoreV1Api()
+        try:
+            core_api.delete_namespace(name)
+            code =0
+            msg='namespace删除成功'
+        except Exception as e:
+            code=1
+            status=getattr(e,'status')
+            if status == 403:
+                msg='没有删除namespace权限'
+            elif status == 401:
+                msg='身份验证失败'
+            else:
+                msg='删除namespace失败'
+        res={'code':code,'msg':msg}
         return JsonResponse(res)
 def logout(request):
     request.session.flush()
     return redirect(index)
+
+def namespace(request):
+    return render(request,'k8s/namespace.html')
