@@ -117,6 +117,9 @@ def namespace_api(request):
         return JsonResponse(res)
 def logout(request):
     request.session.flush()
+
+
+
     return redirect(index)
 
 def namespace(request):

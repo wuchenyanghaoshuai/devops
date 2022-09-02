@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
-{% block title %}Deployment{% endblock %}
-{% block nav-item-2 %}layui-nav-itemed{% endblock %}
-{% block nav-this-2-1 %}layui-this{% endblock %}
+{% block title %}Service{% endblock %}
+{% block nav-item-3 %}layui-nav-itemed{% endblock %}
+{% block nav-this-3-1 %}layui-this{% endblock %}
 {% block content %}
 <div class="layui-card">
     <div class="layui-card-body">
@@ -40,7 +40,7 @@ layui.use('table', function(){
 
   table.render({
     elem: '#test'
-    ,url:'{% url 'deployment_api' %}?namespace=' + namespace
+    ,url:'{% url 'service_api' %}?namespace=' + namespace
     ,toolbar: '#toolbarDemo' //开启头部工具栏，并为其绑定左侧模板
     ,defaultToolbar: ['filter', 'exports', 'print', { //自定义头部工具栏右侧图标。如无需自定义，去除该参数即可
       title: '提示'
@@ -49,18 +49,19 @@ layui.use('table', function(){
     }]
     ,title: '用户数据表'
     ,cols: [[
-          {field: 'name', title: '名称', sort: true}
-          ,{field: 'namespace', title: '命名空间'}
-          ,{field: 'replicas', title: '副本数'}
-          ,{field: 'available_replicas', title: '可用副本数'}
-          ,{field: 'labels', title: '标签',template: labelsFormat}
-          ,{field: 'selector', title: 'Pod标签选择器',templet: labelsFormat}
-          ,{field: 'images', title: '镜像/状态'}
-          ,{field: 'create_time', title: '创建时间'}
-          ,{fixed: 'right', title:'操作', toolbar: '#barDemo', width:150}
+        {field: 'name', title: '名称', sort: true, width: 130}
+        ,{field: 'namespace', title: '命名空间',width: 130, sort: true}
+        ,{field: 'type', title: '类型',width: 120, sort: true}
+        ,{field: 'cluster_ip', title: '集群IP',width: 150}
+        ,{field: 'ports', title: '端口信息',templet: portsFormat}
+        ,{field: 'labels', title: '标签', templet: labelsFormat}
+        ,{field: 'selector', title: 'Pod 标签选择器', templet: selecotrFormat}
+        ,{field: 'endpoint', title: '后端 Pod'}
+        ,{field: 'create_time', title: '创建时间',width: 200}
+        ,{fixed: 'right', title:'操作', toolbar: '#barDemo',width: 150}
     ]]
     ,page: true
-    ,id: 'dptb'
+    ,id: 'servicetb'
   });
 
     function labelsFormat(d) {
@@ -76,7 +77,7 @@ layui.use('table', function(){
             return  result
         }
     }
-    function selecotrFormat(d){
+        function selecotrFormat(d){
         result = "";
         for(let key in d.selector) {
            result += '<span style="border: 1px solid #d6e5ec;border-radius: 8px">' +
@@ -96,15 +97,16 @@ layui.use('table', function(){
         }
         return result
     }
+
   //监听行工具事件
   table.on('tool(test)', function(obj){
     var data = obj.data;
     //console.log(obj)
     if(obj.event === 'del'){
-      layer.confirm('真的要删除' + data["name"] + "这个Deployment吗？", function(index){
+      layer.confirm('真的要删除' + data["name"] + "这个Service吗？", function(index){
           csrf_token = $('[name="csrfmiddlewaretoken"]').val();
         $.ajax({
-            url: '{% url 'deployment_api' %}',
+            url: '{% url 'service_api' %}',
             type: "DELETE",
             data: data,
             headers: {"X-CSRFToken": csrf_token},
@@ -129,7 +131,7 @@ layui.use('table', function(){
     // 监听搜索按钮事件
     $("#searchBtn").click(function () {
         var search_key = $("input[name='name']").val();
-        table.reload('dptb', {
+        table.reload('servicetb', {
           where: { //设定异步数据接口的额外参数，任意设
             search_key: search_key
           }

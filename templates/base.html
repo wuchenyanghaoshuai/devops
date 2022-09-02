@@ -75,27 +75,26 @@
           <a href="javascript:;"style="color: white">工作负载</a>
           <dl class="layui-nav-child">
             <dd><a href="{% url 'deployment' %}"style="color: white"class="{% block nav-this-2-1 %}{% endblock %}">Deployment</a></dd>
-            <dd><a href="javascript:;"style="color: white"class="{% block nav-this-2-2 %}{% endblock %}">Daemonset</a></dd>
-            <dd><a href="javascript:;"style="color: white"class="{% block nav-this-2-3 %}{% endblock %}">Pod</a></dd>
-            <dd><a href="javascript:;"style="color: white"class="{% block nav-this-2-4 %}{% endblock %}">StatefulSet</a></dd>
-            <dd><a href="javascript:;"style="color: white"class="{% block nav-this-2-5 %}{% endblock %}">CronJobs</a></dd>
-            <dd><a href="javascript:;"style="color: white"class="{% block nav-this-2-6 %}{% endblock %}">Jobs</a></dd>
+            <dd><a href="{% url 'daemonset' %}"style="color: white"class="{% block nav-this-2-2 %}{% endblock %}">Daemonset</a></dd>
+            <dd><a href="{% url 'pod' %}"style="color: white"class="{% block nav-this-2-3 %}{% endblock %}">Pod</a></dd>
+            <dd><a href="{% url 'statefulset' %}"style="color: white"class="{% block nav-this-2-4 %}{% endblock %}">StatefulSet</a></dd>
           </dl>
         </li>
-          <li class="layui-nav-item">
+          <li class="layui-nav-item {% block nav-item-3 %}{% endblock %}">
           <a href="javascript:;"style="color: white">负载均衡</a>
           <dl class="layui-nav-child">
-            <dd><a href="javascript:;"style="color: white">Service</a></dd>
-            <dd><a href="javascript:;"style="color: white">Ingress</a></dd>
+            <dd><a href="{% url 'service' %}"style="color: white"class="{% block nav-this-3-1 %}{% endblock %}">Service</a></dd>
+            <dd><a href="{% url 'ingress' %}"style="color: white"class="{% block nav-this-3-2 %}{% endblock %}">Ingress</a></dd>
           </dl>
         </li>
-          <li class="layui-nav-item">
+          <li class="layui-nav-item {% block nav-item-4 %}{% endblock %}">
           <a href="javascript:;"style="color: white">存储与配置</a>
           <dl class="layui-nav-child">
-            <dd><a href="javascript:;"style="color: white">StorageClass</a></dd>
-            <dd><a href="javascript:;"style="color: white">PersistentVolumeClaim</a></dd>
-            <dd><a href="javascript:;"style="color: white">Secret</a></dd>
-            <dd><a href="javascript:;"style="color: white">ConfigMap</a></dd>
+            <dd><a href="{% url 'storageclass' %}"style="color: white"class="{% block nav-this-4-1 %}{% endblock %}">StorageClass</a></dd>
+            <dd><a href="{% url 'pvc' %}"style="color: white"class="{% block nav-this-4-2 %}{% endblock %}">PersistentVolumeClaim</a></dd>
+            <dd><a href="{% url 'pv_storage' %}"style="color: white"class="{% block nav-this-4-3 %}{% endblock %}">PersistentVolume</a></dd>
+            <dd><a href="{% url 'secret' %}"style="color: white"class="{% block nav-this-4-4 %}{% endblock %}">Secret</a></dd>
+            <dd><a href="{% url 'configmap' %}"style="color: white"class="{% block nav-this-4-5 %}{% endblock %}">ConfigMap</a></dd>
           </dl>
         </li>
       </ul>
@@ -129,7 +128,7 @@ layui.use(['element', 'layer', 'util'], function(){
       type: "GET",
       url: '{% url 'namespace_api' %}',
       success: function (res) {
-          console.log(res)
+
           if (res.code==0){
               for(let index in res.data){
                   row = res.data[index]
@@ -177,8 +176,7 @@ layui.use(['element', 'layer', 'util'], function(){
     $("#nsSelect").change(function (){
         var current_ns= $("#nsSelect").val()
         storage.setItem('namespace',current_ns)
-        var namespace=storage.getItem('namespace')
-        console.log(namespace)
+        location.reload()
     })
 });
 </script>

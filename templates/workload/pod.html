@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% block title %}Pods{% endblock %}
+{% block nav-item-2 %}layui-nav-itemed{% endblock %}
+{% block nav-this-2-3 %}layui-this{% endblock %}
+
+{% block content %}
+    <span class="layui-breadcrumb">
+      <a href="#">首页</a>
+      <a href="#">工作负载</a>
+      <a><cite>Pods</cite></a>
+    </span>
+    <hr>
+<div class="layui-card">
+    <div class="layui-card-body">
+
+        <div class="layui-row">
+            <div class="layui-col-md12">
+                <button class="layui-btn" style="float: left">创建</button>
+                <input type="text" name="name" class="layui-input" style="width: 150px;float: left;margin-left: 20px">
+                <button class="layui-btn" style="float: left" id="searchBtn">搜索</button>
+            </div>
+            <div class="layui-col-md12">
+                <table class="layui-hide" id="test" lay-filter="test"></table>
+                <script type="text/html" id="barDemo">
+                  <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="yaml">YAML</a>
+                  <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+                </script>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block js %}
+<script>
+
+// 获取当前命名空间
+var storage = window.sessionStorage;
+var namespace = storage.getItem("namespace");
+
+layui.use('table', function(){
+  var table = layui.table;
+  var $ = layui.jquery;
+
+    table.render({
+      elem: '#test'
+      ,url:'{% url 'pod_api' %}?namespace=' + namespace
+      ,toolbar: '#toolbarDemo' //开启头部工具栏，并为其绑定左侧模板
+      ,defaultToolbar: ['filter', 'exports', 'print', { //自定义头部工具栏右侧图标。如无需自定义，去除该参数即可
+        title: '提示'
+        ,layEvent: 'LAYTABLE_TIPS'
+        ,icon: 'layui-icon-tips'
+      }]
+      ,cols: [[
+        {field: 'name', title: '名称', sort: true}
+        ,{field: 'namespace', title: '命名空间',sort: true}
+        ,{field: 'pod_ip', title: 'IP地址'}
+        ,{field: 'labels', title: '标签', templet: labelsFormat}
+        ,{field: 'containers', title: '容器组', templet: containersFormat}
+        ,{field: 'status', title: '状态',sort: true, templet: statusFormat}
+        ,{field: 'create_time', title: '创建时间'}
+        ,{fixed: 'right', title:'操作', toolbar: '#barDemo',width: 250}
+      ]]
+      ,page: true
+      ,id: 'potb'
+    });
+    // 标签格式化，是一个对象
+    function labelsFormat(d){
+        result = "";
+        if(d.labels == null){
+            return "None"
+        } else {
+            for (let key in d.labels) {
+                result += '<span style="border: 1px solid #d6e5ec;border-radius: 8px">' +
+                    key + ':' + d.labels[key] +
+                    '</span><br>'
+            }
+            return result
+        }
+    }
+    function containersFormat(d) {
+        if (d.containers) {
+            for(let key in d.containers) {
+                data = d.containers[key];
+                result += key + ':' + data.c_name  + '=' + data.c_image + '<br>' +
+                          '重启次数:' + data.restart_count  + '<br>' +
+                          '状态:' + data.c_status + '<br>'
+            }
+            return result
+        } else {
+            return "None"
+        }
+    }
+    // 如果status为None，使用容器状态显示
+    function statusFormat(d){
+        if(d.status == "None"){
+            for(let key in d.containers) {
+                result += d.containers[key].c_status + '<br>'
+            }
+            return result
+        } else {
+            return d.status
+        }
+    }
+
+  //监听行工具事件
+  table.on('tool(test)', function(obj){
+    var data = obj.data;
+    //console.log(obj)
+    if(obj.event === 'del'){
+      layer.confirm('真的要删除' + data["name"] + "这个Pod吗？", function(index){
+          csrf_token = $('[name="csrfmiddlewaretoken"]').val();
+        $.ajax({
+            url: '{% url 'pod_api' %}',
+            type: "DELETE",
+            data: data,
+            headers: {"X-CSRFToken": csrf_token},
+            success: function (res) {
+                if (res.code == 0) {
+                    layer.msg(res.msg, {icon: 6});
+                    obj.del()
+                } else {
+                    layer.msg(res.msg, {icon: 5})
+                }
+            },
+            error: function () {
+                layer.msg("服务器接口异常",{icon: 5})
+            }
+        })
+
+      });
+    } else if(obj.event === 'yaml'){
+
+    }
+  });
+    // 监听搜索按钮事件
+
+    $("#searchBtn").click(function () {
+        var search_key = $("input[name='name']").val();
+        table.reload('potb', {
+          where: { //设定异步数据接口的额外参数，任意设
+            search_key: search_key
+          }
+          ,page: {
+            curr: 1 //重新从第 1 页开始
+          }
+        }); //只重载数据
+    })
+
+});
+</script>
+
+{% endblock %}

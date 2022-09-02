@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
-{% block title %}Deployment{% endblock %}
+{% block title %}StatefulSet{% endblock %}
 {% block nav-item-2 %}layui-nav-itemed{% endblock %}
-{% block nav-this-2-1 %}layui-this{% endblock %}
+{% block nav-this-2-4 %}layui-this{% endblock %}
 {% block content %}
 <div class="layui-card">
     <div class="layui-card-body">
@@ -40,7 +40,7 @@ layui.use('table', function(){
 
   table.render({
     elem: '#test'
-    ,url:'{% url 'deployment_api' %}?namespace=' + namespace
+    ,url:'{% url 'statefulset_api' %}?namespace=' + namespace
     ,toolbar: '#toolbarDemo' //开启头部工具栏，并为其绑定左侧模板
     ,defaultToolbar: ['filter', 'exports', 'print', { //自定义头部工具栏右侧图标。如无需自定义，去除该参数即可
       title: '提示'
@@ -50,17 +50,18 @@ layui.use('table', function(){
     ,title: '用户数据表'
     ,cols: [[
           {field: 'name', title: '名称', sort: true}
-          ,{field: 'namespace', title: '命名空间'}
-          ,{field: 'replicas', title: '副本数'}
-          ,{field: 'available_replicas', title: '可用副本数'}
-          ,{field: 'labels', title: '标签',template: labelsFormat}
-          ,{field: 'selector', title: 'Pod标签选择器',templet: labelsFormat}
-          ,{field: 'images', title: '镜像/状态'}
-          ,{field: 'create_time', title: '创建时间'}
-          ,{fixed: 'right', title:'操作', toolbar: '#barDemo', width:150}
+          ,{field: 'namespace', title: '命名空间',sort: true}
+          ,{field: 'service_name', title: 'Service名称'}
+          ,{field: 'replicas', title: '预期副本数',width: 100}
+          ,{field: 'ready_replicas', title: '可用副本数',width: 100}
+          ,{field: 'labels', title: '标签',templet: labelsFormat}
+          ,{field: 'selector', title: 'Pod 标签选择器',templet: selecotrFormat}
+          ,{field: 'containers', title: '容器', templet: containersFormat}
+          ,{field: 'create_time', title: '创建时间',width: 200}
+          ,{fixed: 'right', title:'操作', toolbar: '#barDemo',width: 150}
     ]]
     ,page: true
-    ,id: 'dptb'
+    ,id: 'ststb'
   });
 
     function labelsFormat(d) {
@@ -76,26 +77,23 @@ layui.use('table', function(){
             return  result
         }
     }
-    function selecotrFormat(d){
-        result = "";
-        for(let key in d.selector) {
-           result += '<span style="border: 1px solid #d6e5ec;border-radius: 8px">' +
-                key + ':' + d.selector[key] +
-                   '</span><br>'
-        }
-        return result
-    }
-    function portsFormat(d) {
-        result = "";
-        for(let key in d.ports) {
-            data = d.ports[key];
-            result += '名称: ' + data.port_name + '<br>' +
-                    '端口: ' + data.port + '<br>' +
-                    '协议: ' + data.protocol + '<br>' +
-                    '容器端口: ' + data.target_port + '<br>'
-        }
-        return result
-    }
+      function selecotrFormat(d){
+          result = "";
+          for(let key in d.selector) {
+             result += '<span style="border: 1px solid #d6e5ec;border-radius: 8px">' +
+                  key + ':' + d.selector[key] +
+                     '</span><br>'
+          }
+          return result
+      }
+      function containersFormat(d) {
+          result = "";
+          for(let key in d.containers) {
+              result += key + '=' + d.containers[key] + '<br>'
+          }
+          return result
+      }
+
   //监听行工具事件
   table.on('tool(test)', function(obj){
     var data = obj.data;
@@ -104,7 +102,7 @@ layui.use('table', function(){
       layer.confirm('真的要删除' + data["name"] + "这个Deployment吗？", function(index){
           csrf_token = $('[name="csrfmiddlewaretoken"]').val();
         $.ajax({
-            url: '{% url 'deployment_api' %}',
+            url: '{% url 'statefulset_api' %}',
             type: "DELETE",
             data: data,
             headers: {"X-CSRFToken": csrf_token},
@@ -129,7 +127,7 @@ layui.use('table', function(){
     // 监听搜索按钮事件
     $("#searchBtn").click(function () {
         var search_key = $("input[name='name']").val();
-        table.reload('dptb', {
+        table.reload('ststb', {
           where: { //设定异步数据接口的额外参数，任意设
             search_key: search_key
           }

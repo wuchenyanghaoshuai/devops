@@ -52,7 +52,7 @@ layui.use('table', function(){
   });
 
     function labelsFormat(d) {
-        //console.log(d.labels)
+
         result = "";
         if (d.labels == null) {
             return "None"
@@ -68,7 +68,7 @@ layui.use('table', function(){
   //监听行工具事件
   table.on('tool(test)', function(obj){
     var data = obj.data;
-    //console.log(obj)
+
     if(obj.event === 'del'){
       layer.confirm('真的要删除' + data["name"] + "这个命名空间吗？", function(index){
           csrf_token = $('[name="csrfmiddlewaretoken"]').val();
