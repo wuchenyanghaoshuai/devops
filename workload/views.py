@@ -10,14 +10,14 @@ def deployment(request):
     return render(request,'workload/deployment.html')
 
 def deployment_api(request):
+    code = 0
+    msg = ""
+    auth_type = request.session.get("auth_type")
+    token = request.session.get("token")
+    k8s.load_auth_config(auth_type, token)
+    apps_api = client.AppsV1Api()
     # 命名空间选择和命名空间表格使用
     if request.method == "GET":
-        code = 0
-        msg = ""
-        auth_type = request.session.get("auth_type")
-        token = request.session.get("token")
-        k8s.load_auth_config(auth_type, token)
-        apps_api = client.AppsV1Api()
         search_key = request.GET.get("search_key")
         namespace= request.GET.get("namespace")
         data = []
@@ -80,10 +80,6 @@ def deployment_api(request):
         request_data = QueryDict(request.body)
         name = request_data.get("name")
         namespace = request_data.get("namespace")
-        auth_type = request.session.get("auth_type")
-        token = request.session.get("token")
-        k8s.load_auth_config(auth_type, token)
-        apps_api = client.AppsV1Api()
         try:
             apps_api.delete_namespaced_deployment(namespace=namespace,name=name)
             code = 0
@@ -104,14 +100,15 @@ def daemonset(request):
     return render(request,'workload/daemonset.html')
 
 def daemonset_api(request):
+
     # 命名空间选择和命名空间表格使用
+    code = 0
+    msg = ""
+    auth_type = request.session.get("auth_type")
+    token = request.session.get("token")
+    k8s.load_auth_config(auth_type, token)
+    apps_api = client.AppsV1Api()
     if request.method == "GET":
-        code = 0
-        msg = ""
-        auth_type = request.session.get("auth_type")
-        token = request.session.get("token")
-        k8s.load_auth_config(auth_type, token)
-        apps_api = client.AppsV1Api()
         search_key = request.GET.get("search_key")
         namespace= request.GET.get("namespace")
         data = []
@@ -163,10 +160,6 @@ def daemonset_api(request):
         request_data = QueryDict(request.body)
         name = request_data.get("name")
         namespace = request_data.get("namespace")
-        auth_type = request.session.get("auth_type")
-        token = request.session.get("token")
-        k8s.load_auth_config(auth_type, token)
-        apps_api = client.AppsV1Api()
         try:
             apps_api.delete_namespaced_deployment(namespace=namespace,name=name)
             code = 0
@@ -189,13 +182,13 @@ def statefulset(request):
 
 def statefulset_api(request):
     # 命名空间选择和命名空间表格使用
+    code = 0
+    msg = ""
+    auth_type = request.session.get("auth_type")
+    token = request.session.get("token")
+    k8s.load_auth_config(auth_type, token)
+    apps_api = client.AppsV1Api()
     if request.method == "GET":
-        code = 0
-        msg = ""
-        auth_type = request.session.get("auth_type")
-        token = request.session.get("token")
-        k8s.load_auth_config(auth_type, token)
-        apps_api = client.AppsV1Api()
         search_key = request.GET.get("search_key")
         namespace= request.GET.get("namespace")
         data = []
@@ -249,10 +242,6 @@ def statefulset_api(request):
         request_data = QueryDict(request.body)
         name = request_data.get("name")
         namespace = request_data.get("namespace")
-        auth_type = request.session.get("auth_type")
-        token = request.session.get("token")
-        k8s.load_auth_config(auth_type, token)
-        apps_api = client.AppsV1Api()
         try:
             apps_api.delete_namespaced_deployment(namespace=namespace,name=name)
             code = 0
@@ -275,13 +264,13 @@ def pod(request):
 
 def pod_api(request):
     # 命名空间选择和命名空间表格使用
+    code = 0
+    msg = ""
+    auth_type = request.session.get("auth_type")
+    token = request.session.get("token")
+    k8s.load_auth_config(auth_type, token)
+    core_api = client.CoreV1Api()
     if request.method == "GET":
-        code = 0
-        msg = ""
-        auth_type = request.session.get("auth_type")
-        token = request.session.get("token")
-        k8s.load_auth_config(auth_type, token)
-        core_api = client.CoreV1Api()
         search_key = request.GET.get("search_key")
         namespace= request.GET.get("namespace")
         data = []
@@ -357,10 +346,6 @@ def pod_api(request):
         request_data = QueryDict(request.body)
         name = request_data.get("name")
         namespace = request_data.get("namespace")
-        auth_type = request.session.get("auth_type")
-        token = request.session.get("token")
-        k8s.load_auth_config(auth_type, token)
-        core_api = client.CoreV1Api()
         try:
             core_api.delete_namespaced_pod(namespace=namespace,name=name)
             code = 0

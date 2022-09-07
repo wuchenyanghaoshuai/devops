@@ -11,13 +11,13 @@ def storageclass(request):
 
 def storageclass_api(request):
     # 命名空间选择和命名空间表格使用
+    code = 0
+    msg = ""
+    auth_type = request.session.get("auth_type")
+    token = request.session.get("token")
+    k8s.load_auth_config(auth_type, token)
+    sc_api = client.StorageV1Api()
     if request.method == "GET":
-        code = 0
-        msg = ""
-        auth_type = request.session.get("auth_type")
-        token = request.session.get("token")
-        k8s.load_auth_config(auth_type, token)
-        sc_api = client.StorageV1Api()
         search_key = request.GET.get("search_key")
         data = []
         try:
@@ -66,12 +66,9 @@ def storageclass_api(request):
     elif request.method == "DELETE":
         request_data = QueryDict(request.body)
         name = request_data.get("name")
-        auth_type = request.session.get("auth_type")
-        token = request.session.get("token")
-        k8s.load_auth_config(auth_type, token)
-        core_api = client.CoreV1Api()
+        sc_api = client.StorageV1Api()
         try:
-            core_api.delete_persistent_volume(name)
+            sc_api.delete_storage_class(name)
             code = 0
             msg = "删除成功."
         except Exception as e:
@@ -88,13 +85,14 @@ def pv_storage(request):
 
 def pv_storage_api(request):
     # 命名空间选择和命名空间表格使用
+    code = 0
+    msg = ""
+    auth_type = request.session.get("auth_type")
+    token = request.session.get("token")
+    k8s.load_auth_config(auth_type, token)
+    core_api = client.CoreV1Api()
     if request.method == "GET":
-        code = 0
-        msg = ""
-        auth_type = request.session.get("auth_type")
-        token = request.session.get("token")
-        k8s.load_auth_config(auth_type, token)
-        core_api = client.CoreV1Api()
+
         search_key = request.GET.get("search_key")
         data = []
         try:
@@ -146,9 +144,7 @@ def pv_storage_api(request):
     elif request.method == "DELETE":
         request_data = QueryDict(request.body)
         name = request_data.get("name")
-        auth_type = request.session.get("auth_type")
-        token = request.session.get("token")
-        k8s.load_auth_config(auth_type, token)
+
         core_api = client.CoreV1Api()
         try:
             core_api.delete_persistent_volume(name)
@@ -223,7 +219,7 @@ def pvc_api(request):
         name = request_data.get("name")
         namespace = request_data.get("namespace")
         try:
-            core_api.delete_namespaced_service(namespace=namespace, name=name)
+            core_api.delete_persistent_volume(namespace=namespace, name=name)
             code = 0
             msg = "删除成功."
         except Exception as e:

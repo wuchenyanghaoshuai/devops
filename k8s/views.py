@@ -11,13 +11,14 @@ def node(request):
 
 
 def node_api(request):
+    code = 0
+    msg = ''
+    auth_type = request.session.get('auth_type')
+    token = request.session.get('token')
+    k8s.load_auth_config(auth_type, token)
+    core_api = client.CoreV1Api()
     if request.method == 'GET':
-        code =0
-        msg=''
-        auth_type= request.session.get('auth_type')
-        token=request.session.get('token')
-        k8s.load_auth_config(auth_type,token)
-        core_api=client.CoreV1Api()
+
         search_key=request.GET.get('search_key')
         data=[]
         try:
@@ -64,13 +65,8 @@ def node_api(request):
         res={'code':code,'msg':msg,'count':count,'data':data}
         return JsonResponse(res)
     elif request.method =='DELETE':
-        auth_type= request.session.get('auth_type')
-        token=request.session.get('token')
-        k8s.load_auth_config(auth_type,token)
         request_data=QueryDict(request.body)
         name=request_data.get('name')
-        core_api = client.CoreV1Api()
-        print(name)
         try:
             core_api.delete_namespace(name)
             code =0
@@ -93,13 +89,13 @@ def pv(request):
 
 def pv_api(request):
     # 命名空间选择和命名空间表格使用
+    code = 0
+    msg = ""
+    auth_type = request.session.get("auth_type")
+    token = request.session.get("token")
+    k8s.load_auth_config(auth_type, token)
+    core_api = client.CoreV1Api()
     if request.method == "GET":
-        code = 0
-        msg = ""
-        auth_type = request.session.get("auth_type")
-        token = request.session.get("token")
-        k8s.load_auth_config(auth_type, token)
-        core_api = client.CoreV1Api()
         search_key = request.GET.get("search_key")
         data = []
         try:
@@ -151,10 +147,6 @@ def pv_api(request):
     elif request.method == "DELETE":
         request_data = QueryDict(request.body)
         name = request_data.get("name")
-        auth_type = request.session.get("auth_type")
-        token = request.session.get("token")
-        k8s.load_auth_config(auth_type, token)
-        core_api = client.CoreV1Api()
         try:
             core_api.delete_persistent_volume(name)
             code = 0
