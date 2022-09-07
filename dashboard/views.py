@@ -62,7 +62,7 @@ def namespace_api(request):
             for ns in core_api.list_namespace().items:
                 name=ns.metadata.name
                 labels=ns.metadata.labels
-                create_time=ns.metadata.creation_timestamp
+                create_time=k8s.datetime_format(ns.metadata.creation_timestamp)
 
                 namespace={'name':name,'labels':labels,'create_time':create_time}
                 #根据指定key来进行搜索namespace
@@ -117,9 +117,6 @@ def namespace_api(request):
         return JsonResponse(res)
 def logout(request):
     request.session.flush()
-
-
-
     return redirect(index)
 
 def namespace(request):

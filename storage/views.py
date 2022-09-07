@@ -27,7 +27,7 @@ def storageclass_api(request):
                 reclaimpolicy=sc.reclaim_policy
                 volumebindingmode=sc.volume_binding_mode
                 allowvolumeexpansion=sc.allow_volume_expansion
-                create_time=sc.metadata.creation_timestamp
+                create_time=k8s.datetime_format(sc.metadata.creation_timestamp)
                 if sc.allow_volume_expansion is  None:
                     allowvolumeexpansion='false'
 
@@ -109,7 +109,7 @@ def pv_storage_api(request):
                 else:
                     pvc = "未绑定"
                 storage_class = pv.spec.storage_class_name
-                create_time = pv.metadata.creation_timestamp
+                create_time = k8s.datetime_format(pv.metadata.creation_timestamp)
                 pv = {"name": name, "capacity": capacity, "access_modes":access_modes,
                              "reclaim_policy":reclaim_policy , "status":status, "pvc":pvc,
                             "storage_class":storage_class,"create_time": create_time}
@@ -183,7 +183,7 @@ def pvc_api(request):
                 capacity = (pvc.status.capacity if pvc.status.capacity is None else pvc.status.capacity["storage"])
                 volume_name = pvc.spec.volume_name
                 status = pvc.status.phase
-                create_time = pvc.metadata.creation_timestamp
+                create_time = k8s.datetime_format(pvc.metadata.creation_timestamp)
 
                 pvc = {"name": name, "namespace": namespace, "lables": labels,
                        "storage_class_name": storage_class_name, "access_modes": access_modes, "capacity": capacity,
@@ -251,7 +251,7 @@ def configmap_api(request):
                 name = cm.metadata.name
                 namespace = cm.metadata.namespace
                 data_length = ("0" if cm.data is None else len(cm.data))
-                create_time = cm.metadata.creation_timestamp
+                create_time = k8s.datetime_format(cm.metadata.creation_timestamp)
 
                 cm = {"name": name, "namespace": namespace, "data_length": data_length, "create_time": create_time}
                 # 根据搜索值返回数据
@@ -318,7 +318,7 @@ def secret_api(request):
                 name = secret.metadata.name
                 namespace = secret.metadata.namespace
                 data_length = ("空" if secret.data is None else len(secret.data))
-                create_time = secret.metadata.creation_timestamp
+                create_time = k8s.datetime_format(secret.metadata.creation_timestamp)
 
                 se = {"name": name, "namespace": namespace, "data_length": data_length, "create_time": create_time}
                 # 根据搜索值返回数据

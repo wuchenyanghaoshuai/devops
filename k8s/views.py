@@ -26,7 +26,7 @@ def node_api(request):
                 print(node.status.capacity['memory'])
                 name=node.metadata.name
                 labels=node.metadata.labels
-                create_time=node.metadata.creation_timestamp
+                create_time=k8s.datetime_format(node.metadata.creation_timestamp)
                 cpu=node.status.capacity['cpu']
                 mem=node.status.capacity['memory']
                 print("内存为 %s,cpu为 %s" %(mem,cpu))
@@ -112,7 +112,7 @@ def pv_api(request):
                 else:
                     pvc = "未绑定"
                 storage_class = pv.spec.storage_class_name
-                create_time = pv.metadata.creation_timestamp
+                create_time = k8s.datetime_format(pv.metadata.creation_timestamp)
                 pv = {"name": name, "capacity": capacity, "access_modes":access_modes,
                              "reclaim_policy":reclaim_policy , "status":status, "pvc":pvc,
                             "storage_class":storage_class,"create_time": create_time}
