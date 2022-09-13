@@ -104,7 +104,12 @@ layui.use('table', function(){
 
       });
     } else if(obj.event === 'yaml'){
-
+        layer.open({
+            title: 'YAML',
+            type: 2,
+            area: ['50%', '60%'],
+            content: "{% url 'ace_editor' %}?resource=node&" + 'namespace=' + data['namespace'] + '&name=' + data['name'],
+        })
     }
   });
     // 监听搜索按钮事件

@@ -3,6 +3,7 @@ from django.shortcuts import render,redirect
 from django.http import  JsonResponse,QueryDict
 from  kubernetes import config,client
 import os,hashlib,random
+
 from devops import  k8s
 
 # Create your views here.
@@ -23,19 +24,19 @@ def node_api(request):
         data=[]
         try:
             for node in core_api.list_node().items:
-                print(node.status.capacity['memory'])
+
                 name=node.metadata.name
                 labels=node.metadata.labels
                 create_time=k8s.datetime_format(node.metadata.creation_timestamp)
                 cpu=node.status.capacity['cpu']
                 mem=node.status.capacity['memory']
-                print("内存为 %s,cpu为 %s" %(mem,cpu))
+
                 status=node.status.conditions[-1].status
                 scheduler=("是" if node.spec.unschedulable is None else "否")
                 kubelet_version=node.status.node_info.kubelet_version
                 cri_version=node.status.node_info.container_runtime_version
                 node={'name':name,'labels':labels,'status':status,'scheduler':scheduler,'cpu':cpu,'memory':mem,'kubelet_version':kubelet_version,'cri_version':cri_version,'create_time':create_time}
-                print("下面是打印node信息 %s"%node)
+
                 #根据指定key来进行搜索namespace
                 if search_key:
                     if search_key in name:
@@ -86,7 +87,8 @@ def node_api(request):
 
 def pv(request):
     return  render(request,'k8s/pv.html')
-
+def pv_create(request):
+    return render(request,'k8s/pv_create.html')
 def pv_api(request):
     # 命名空间选择和命名空间表格使用
     code = 0
@@ -116,7 +118,7 @@ def pv_api(request):
                 pv = {"name": name, "capacity": capacity, "access_modes":access_modes,
                              "reclaim_policy":reclaim_policy , "status":status, "pvc":pvc,
                             "storage_class":storage_class,"create_time": create_time}
-                print("下面是打印pv %s" %pv)
+
                 # 根据搜索值返回数据
                 if search_key:
                     if search_key in name:
@@ -158,5 +160,42 @@ def pv_api(request):
                 msg = "没有删除权限"
             else:
                 msg = "删除失败！"
+        res = {'code': code, 'msg': msg}
+        return JsonResponse(res)
+    elif request.method == "POST":
+        name = request.POST.get("name", None)
+        capacity = request.POST.get("capacity", None)
+        access_mode = request.POST.get("access_mode", None)
+        print("下面是access_mode %s"%access_mode)
+        storage_type = request.POST.get("storage_type", None)
+        server_ip = request.POST.get("server_ip", None)
+        mount_path = request.POST.get("mount_path", None)
+        body = client.V1PersistentVolume(
+            api_version="v1",
+            kind="PersistentVolume",
+            metadata=client.V1ObjectMeta(name=name),
+            spec=client.V1PersistentVolumeSpec(
+                capacity={'storage': capacity},
+                access_modes=[access_mode],
+                storage_class_name='managed-nfs-storage',
+                volume_mode="Filesystem",
+                nfs=client.V1NFSVolumeSource(
+                    server=server_ip,
+                    path="/ifs/kubernetes/%s" % mount_path
+                )
+            )
+        )
+        try:
+            core_api.create_persistent_volume(body=body)
+            code = 0
+            msg = "创建成功."
+        except Exception as e:
+            print(e)
+            code = 1
+            status = getattr(e, "status")
+            if status == 403:
+                msg = "没有访问权限！"
+            else:
+                msg = "创建失败！"
         res = {'code': code, 'msg': msg}
         return JsonResponse(res)

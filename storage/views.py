@@ -113,7 +113,7 @@ def pv_storage_api(request):
                 pv = {"name": name, "capacity": capacity, "access_modes":access_modes,
                              "reclaim_policy":reclaim_policy , "status":status, "pvc":pvc,
                             "storage_class":storage_class,"create_time": create_time}
-                print("下面是打印pv %s" %pv)
+
                 # 根据搜索值返回数据
                 if search_key:
                     if search_key in name:

@@ -14,7 +14,7 @@
 
         <div class="layui-row">
             <div class="layui-col-md12">
-                <button class="layui-btn" style="float: left">创建</button>
+                <a href="{% url 'pv_create' %}" class="layui-btn"style="float: left">创建</a>
                 <input type="text" name="name" class="layui-input" style="width: 150px;float: left;margin-left: 20px">
                 <button class="layui-btn" style="float: left" id="searchBtn">搜索</button>
             </div>
@@ -103,7 +103,12 @@ layui.use('table', function(){
 
       });
     } else if(obj.event === 'yaml'){
-
+        layer.open({
+            title: 'YAML',
+            type: 2,
+            area: ['50%', '60%'],
+            content: "{% url 'ace_editor' %}?resource=pv&" + 'namespace=' + data['namespace'] + '&name=' + data['name'],
+        })
     }
   });
     // 监听搜索按钮事件

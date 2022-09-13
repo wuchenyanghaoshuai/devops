@@ -8,7 +8,8 @@ from devops import  k8s
 # Create your views here.
 def deployment(request):
     return render(request,'workload/deployment.html')
-
+def deployment_create(request):
+    return render(request,'workload/deployment_create.html')
 def deployment_api(request):
     code = 0
     msg = ""
@@ -45,9 +46,6 @@ def deployment_api(request):
 
                 create_time=k8s.datetime_format(dp.metadata.creation_timestamp)
                 dp = {"name":name,"namespace":namespace,"replicas":replicas,"available_replicas":available_replicas,"labels":labels,"selector":selector ,"images":images,"create_time":create_time}
-                print("=============================")
-                print(dp)
-                print(labels)
 
                 # 根据搜索值返回数据
                 if search_key:
@@ -91,6 +89,88 @@ def deployment_api(request):
                 msg = "没有删除权限"
             else:
                 msg = "删除失败！"
+        res = {'code': code, 'msg': msg}
+        return JsonResponse(res)
+
+    elif request.method == "POST":
+        name = request.POST.get("name",None)
+        namespace = request.POST.get("namespace",None)
+        image = request.POST.get("image",None)
+        replicas = int(request.POST.get("replicas",None))
+        # 处理标签
+        labels = {}
+        try:
+            for l in request.POST.get("labels",None).split(","):
+                k = l.split("=")[0]
+                v = l.split("=")[1]
+                labels[k] = v
+        except Exception as e:
+            res = {"code": 1, "msg": "标签格式错误！"}
+            return JsonResponse(res)
+        resources = request.POST.get("resources",None)
+        health_liveness = request.POST.get("health[liveness]",None)  # {'health[liveness]': ['on'], 'health[readiness]': ['on']}
+        health_readiness = request.POST.get("health[readiness]",None)
+
+        if resources == "1c2g":
+            resources = client.V1ResourceRequirements(limits={"cpu":"1","memory":"2Gi"},
+                                                      requests={"cpu":"0.5","memory":"1i"})
+        elif resources == "2c4g":
+            resources = client.V1ResourceRequirements(limits={"cpu": "2", "memory": "4Gi"},
+                                                      requests={"cpu": "1", "memory": "2Gi"})
+        elif resources == "4c8g":
+            resources = client.V1ResourceRequirements(limits={"cpu": "4", "memory": "8Gi"},
+                                                      requests={"cpu": "2", "memory": "4Gi"})
+        else:
+            resources = client.V1ResourceRequirements(limits={"cpu":"500m","memory":"1Gi"},
+                                                      requests={"cpu":"250m","memory":"500Mi"})
+        liveness_probe = ""
+        if health_liveness == "on":
+            liveness_probe = client.V1Probe(http_get="/",timeout_seconds=30,initial_delay_seconds=30)
+        readiness_probe = ""
+        if health_readiness == "on":
+            readiness_probe = client.V1Probe(http_get="/",timeout_seconds=30,initial_delay_seconds=30)
+
+        for dp in apps_api.list_namespaced_deployment(namespace=namespace).items:
+            if name == dp.metadata.name:
+                res = {"code": 1, "msg": "Deployment已经存在！"}
+                return JsonResponse(res)
+
+        body = client.V1Deployment(
+            api_version="apps/v1",
+            kind="Deployment",
+            metadata=client.V1ObjectMeta(name=name),
+            spec=client.V1DeploymentSpec(
+                replicas=replicas,
+                selector={'matchLabels': labels},
+                template=client.V1PodTemplateSpec(
+                    metadata=client.V1ObjectMeta(labels=labels),
+                    spec=client.V1PodSpec(
+                        containers=[client.V1Container(   # https://github.com/kubernetes-client/python/blob/master/kubernetes/docs/V1Container.md
+                            name="web",
+                            image=image,
+                            env=[{"name": "TEST", "value": "123"}, {"name": "DEV", "value": "456"}],
+                            ports=[client.V1ContainerPort(container_port=80)],
+                            # liveness_probe=liveness_probe,
+                            # readiness_probe=readiness_probe,
+                            resources=resources,
+                        )]
+                    )
+                ),
+            )
+        )
+        try:
+            apps_api.create_namespaced_deployment(namespace=namespace, body=body)
+            code = 0
+            msg = "创建成功."
+        except Exception as e:
+
+
+            code = 1
+            status = getattr(e, "status")
+            if status == 403:
+                msg = "没有访问权限！"
+            else:
+                msg = "创建失败！"
         res = {'code': code, 'msg': msg}
         return JsonResponse(res)
 
@@ -314,7 +394,7 @@ def pod_api(request):
                 po = {"name": name, "namespace": namespace, "pod_ip": pod_ip,
                       "labels": labels, "containers": containers, "status": status,
                       "create_time": create_time}
-                print(po)
+
                 # 根据搜索值返回数据
                 if search_key:
                     if search_key in name:
