@@ -63,3 +63,7 @@ from datetime import  date,timedelta
 def datetime_format(timestamp):
     t=date.strftime((timestamp + timedelta(hours=8)),'%Y-%m-%d %H:%M:%S')
     return t
+from datetime import date,timedelta
+def dt_format(timestamp):
+    t = date.strftime((timestamp + timedelta(hours=8)), '%Y-%m-%d %H:%M:%S')
+    return t

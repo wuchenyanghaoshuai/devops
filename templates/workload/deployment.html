@@ -22,7 +22,10 @@
                 <table class="layui-hide" id="test" lay-filter="test"></table>
                 <script type="text/html" id="barDemo">
                   <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="yaml">YAML</a>
-                  <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+                  <a class="layui-btn layui-btn-xs" lay-event="details">详情</a>
+                  <a class="layui-btn layui-btn-xs" lay-event="scale">扩容/缩容</a>
+                  <a class="layui-btn layui-btn-xs" lay-event="del">删除</a>
+
                 </script>
             </div>
         </div>
@@ -63,7 +66,7 @@ layui.use('table', function(){
           ,{field: 'selector', title: 'Pod标签选择器',templet: labelsFormat}
           ,{field: 'images', title: '镜像/状态'}
           ,{field: 'create_time', title: '创建时间'}
-          ,{fixed: 'right', title:'操作', toolbar: '#barDemo', width:150}
+          ,{fixed: 'right', title:'操作', toolbar: '#barDemo', width:250}
     ]]
     ,page: true
     ,id: 'dptb'
@@ -135,6 +138,35 @@ layui.use('table', function(){
             area: ['50%', '60%'],
             content: "{% url 'ace_editor' %}?resource=deployment&" + 'namespace=' + data['namespace'] + '&name=' + data['name'],
         })
+    } else if (obj.event === 'scale'){
+                layer.prompt({
+            formType: 0
+            ,title: "扩容/缩容"
+            ,value: data.replicas   // 默认值，从当前字段获取
+          }, function(value, index){
+            csrf_token = $('[name="csrfmiddlewaretoken"]').val();
+            data['replicas']=value;  // value是表单输入的值，重置值
+            $.ajax({
+                url: '{% url "deployment_api" %}',
+                type: "PUT",
+                data: data,
+                headers: {"X-CSRFToken": csrf_token},
+                success: function (res) {
+                     if(res.code == '0'){
+                           layer.msg(res.msg,{icon:6}); //2秒关闭（如果不配置，默认是3秒）
+                           // 更新当前页面字段值
+                           obj.update({
+                               replicas: value
+                           })
+                       } else {
+                           layer.msg(res.msg, {icon:5})
+                       }
+                }
+            });
+            layer.close(index);  // 关闭弹窗
+          });
+    }else if (obj.event === 'details'){
+        window.location.href = "{% url "deployment_details" %}?namespace=" + data["namespace"] + "&name=" + data["name"]
     }
   });
     // 监听搜索按钮事件

@@ -9,7 +9,13 @@
       <a href="#">工作负载</a>
       <a><cite>Pods</cite></a>
     </span>
-
+    <hr>
+    <div  id="modal"  style="display: none">
+    <form class="layui-form " action="" >
+      <div id="log-text" class="layui-form-item" style="background-color: black;color: white;padding: 10px;font-size: 16px">
+      </div>
+    </form>
+    </div>
 <div class="layui-card">
     <div class="layui-card-body">
 
@@ -23,6 +29,7 @@
                 <table class="layui-hide" id="test" lay-filter="test"></table>
                 <script type="text/html" id="barDemo">
                   <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="yaml">YAML</a>
+                  <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="log">查看日志</a>
                   <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
                 </script>
             </div>
@@ -81,6 +88,7 @@ layui.use('table', function(){
         }
     }
     function containersFormat(d) {
+        result = "";
         if (d.containers) {
             for(let key in d.containers) {
                 data = d.containers[key];
@@ -95,6 +103,7 @@ layui.use('table', function(){
     }
     // 如果status为None，使用容器状态显示
     function statusFormat(d){
+        result = "";
         if(d.status == "None"){
             for(let key in d.containers) {
                 result += d.containers[key].c_status + '<br>'
@@ -138,6 +147,33 @@ layui.use('table', function(){
             area: ['50%', '60%'],
             content: "{% url 'ace_editor' %}?resource=pod&" + 'namespace=' + data['namespace'] + '&name=' + data['name'],
         })
+    } else if(obj.event === 'log'){
+        var csrf_token = $('[name="csrfmiddlewaretoken"]').val();
+        data['csrfmiddlewaretoken'] = csrf_token;
+        $.ajax({
+           url: '{% url "pod_log" %}',
+           type: 'POST',
+           data: data,
+           async: false,
+           success: function (res) {
+               if(res.code == '0'){
+                    $('#log-text').html("<pre>" + res.data + "</pre>");
+               } else {
+                   $('#log-text').html("<pre>" + res.msg + "</pre>");
+               }
+           },
+           error: function (res) {
+               layer.msg("服务器接口异常！", {icon:5})
+           }
+       });
+        // 放在ajax下面，ajax改为同步（获取到数据预先填充html内容）,否则不会显示数据
+        layer.open({
+            title: "容器日志 "+ data["name"],
+            type:1,
+            area : [ '60%', '70%' ],
+            closeBtn: 1, // 关闭按钮
+            content: $("#modal").html()   // form div
+        });
     }
   });
     // 监听搜索按钮事件

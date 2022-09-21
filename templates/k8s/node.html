@@ -3,17 +3,17 @@
 {% block nav-item-1 %}layui-nav-itemed{% endblock %}
 {% block nav-this-1-1 %}layui-this{% endblock %}
 {% block content %}
-  <span class="layui-breadcrumb">
-  <a href="">首页</a>
-  <a href="">Kubernetes</a>
-  <a href="">Nodes</a>
-
-</span>
+    <span class="layui-breadcrumb">
+      <a href="#">首页</a>
+      <a href="#">Kubernetes</a>
+      <a><cite>Nodes</cite></a>
+    </span>
+    <hr>
 <div class="layui-card">
     <div class="layui-card-body">
+
         <div class="layui-row">
             <div class="layui-col-md12">
-
                 <input type="text" name="name" class="layui-input" style="width: 150px;float: left">
                 <button class="layui-btn" style="float: left" id="searchBtn">搜索</button>
             </div>
@@ -21,7 +21,7 @@
                 <table class="layui-hide" id="test" lay-filter="test"></table>
                 <script type="text/html" id="barDemo">
                   <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="yaml">YAML</a>
-                  <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+                  <a class="layui-btn layui-btn-xs" lay-event="details">详情</a>
                 </script>
             </div>
         </div>
@@ -48,16 +48,16 @@ layui.use('table', function(){
     }]
     ,title: '用户数据表'
     ,cols: [[
-      {field: 'name', title:'名称', sort: true}
-      ,{field: 'labels', title:'标签',templet: labelsFormat}
-      ,{field: 'create_time', title:'创建时间'}
-      ,{field: 'scheduler', title: '可调度'}
-      ,{field: 'cpu', title: 'CPU'}
-      ,{field: 'memory', title: '内存'}
-      ,{field: 'kubelet_version', title: 'kubelet版本'}
-      ,{field: 'cri_version', title: 'CRI版本'}
-      ,{field: 'create_time', title: '创建时间'}
-      ,{fixed: 'right', title:'操作', toolbar: '#barDemo', width:150}
+          {field: 'name', title: '名称', sort: true}
+          ,{field: 'labels', title: '标签',templet: labelsFormat}
+          ,{field: 'status', title: '准备就绪'}
+          ,{field: 'scheduler', title: '可调度'}
+          ,{field: 'cpu', title: 'CPU'}
+          ,{field: 'memory', title: '内存'}
+          ,{field: 'kebelet_version', title: 'kubelet版本'}
+          ,{field: 'cri_version', title: 'CRI版本'}
+          ,{field: 'create_time', title: '创建时间'}
+          ,{fixed: 'right', title:'操作', toolbar: '#barDemo', width:150}
     ]]
     ,page: true
     ,id: 'ntb'
@@ -81,28 +81,8 @@ layui.use('table', function(){
   table.on('tool(test)', function(obj){
     var data = obj.data;
     //console.log(obj)
-    if(obj.event === 'del'){
-      layer.confirm('真的要删除' + data["name"] + "这个命名空间吗？", function(index){
-          csrf_token = $('[name="csrfmiddlewaretoken"]').val();
-        $.ajax({
-            url: '{% url 'namespace_api' %}',
-            type: "DELETE",
-            data: data,
-            headers: {"X-CSRFToken": csrf_token},
-            success: function (res) {
-                if (res.code == 0) {
-                    layer.msg(res.msg, {icon: 6});
-                    obj.del()
-                } else {
-                    layer.msg(res.msg, {icon: 5})
-                }
-            },
-            error: function () {
-                layer.msg("服务器接口异常",{icon: 5})
-            }
-        })
-
-      });
+    if(obj.event === 'details'){
+        window.location.href = "{% url 'node_details' %}?node_name=" + data["name"]
     } else if(obj.event === 'yaml'){
         layer.open({
             title: 'YAML',
