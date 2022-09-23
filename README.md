@@ -1,5 +1,5 @@
 # devops
-![image](https://user-images.githubusercontent.com/39818267/189874164-3e74f53b-91c9-40d5-b2e8-1859cbbbadb5.png)
+![image](https://user-images.githubusercontent.com/39818267/191944101-9dd5190e-128a-4842-93af-b3d3f87e408b.png)
 
 kubernetes-dashboard for django
 #
