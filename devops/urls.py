@@ -19,12 +19,13 @@ from dashboard import views
 
 urlpatterns = [
 #    path('admin/', admin.site.urls),
-    re_path('^$',views.index),
+    re_path('$',views.index,name='index'),
     re_path('login/$',views.login),
     re_path('namespace_api/$',views.namespace_api,name='namespace_api'),
     re_path('logout/$',views.logout),
     re_path('namespace/$',views.namespace,name='namespace'),
     re_path('kubernetes/',include('k8s.urls')),
+    re_path('^node_resource/$', views.node_resource, name="node_resource"),
     re_path('export_resource_api/$',views.export_resource_api,name='export_resource_api'),
     re_path('ace_editor/$',views.ace_editor,name='ace_editor'),
     re_path('workload/',include('workload.urls')),

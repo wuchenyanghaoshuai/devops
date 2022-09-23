@@ -60,7 +60,7 @@
       <!-- 左侧导航区域（可配合layui已有的垂直导航） -->
       <ul class="layui-nav layui-nav-tree layui-bg-green" lay-filter="test">
           <li class="layui-nav-item layui-nav-itemed">
-              <a class="" href="javascript:;">运维平台概述</a>
+              <a class="" href="{% url 'index' %}">运维平台概述</a>
           </li>
         <li class="layui-nav-item {% block nav-item-1 %}{% endblock %}">
           <a class="" href="javascript:;">Kubernetes</a>

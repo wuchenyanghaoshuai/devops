@@ -1,12 +1,58 @@
-from django.shortcuts import render,redirect
-from django.http import  JsonResponse,QueryDict
-from  kubernetes import config,client
+from django.shortcuts import render, redirect
+from django.http import JsonResponse, QueryDict
+from kubernetes import client, config
 import os,hashlib,random
-from devops import  k8s
+from devops import k8s
+from dashboard import node_data
 # Create your views here.
+
 @k8s.self_login_required
 def index(request):
-    return render(request, 'templates/base.html')
+    auth_type = request.session.get("auth_type")
+    token = request.session.get("token")
+    k8s.load_auth_config(auth_type, token)
+    core_api = client.CoreV1Api()
+
+    # echart图表：通过ajax动态渲染/dashboard/node_resource接口获取
+    # 工作负载：访问每个资源的接口，获取count值ajax动态渲染
+
+    # 节点状态
+    n_r = node_data.node_resouces(core_api)
+
+    # 存储资源
+    pv_list = []
+    for pv in core_api.list_persistent_volume().items:
+        pv_name = pv.metadata.name
+        capacity = pv.spec.capacity["storage"]  # 返回字典对象
+        access_modes = pv.spec.access_modes
+        reclaim_policy = pv.spec.persistent_volume_reclaim_policy
+        status = pv.status.phase
+        if pv.spec.claim_ref is not None:
+            pvc_ns = pv.spec.claim_ref.namespace
+            pvc_name = pv.spec.claim_ref.name
+            claim = "%s/%s" %(pvc_ns,pvc_name)
+        else:
+            claim = "未关联PVC"
+        storage_class = pv.spec.storage_class_name
+        create_time = k8s.dt_format(pv.metadata.creation_timestamp)
+
+        data = {"pv_name": pv_name, "capacity": capacity, "access_modes": access_modes,
+                "reclaim_policy": reclaim_policy, "status": status,
+                "claim": claim,"storage_class": storage_class,"create_time": create_time}
+        pv_list.append(data)
+
+    return render(request, 'index.html', {"node_resouces": n_r, "pv_list": pv_list})
+
+# 仪表盘计算资源，为了方便ajax GET准备的接口
+def node_resource(request):
+    auth_type = request.session.get("auth_type")
+    token = request.session.get("token")
+    k8s.load_auth_config(auth_type, token)
+    core_api = client.CoreV1Api()
+
+    res = node_data.node_resouces(core_api)
+
+    return  JsonResponse(res)
 
 def login(request):
     if request.method == "GET":
@@ -14,6 +60,7 @@ def login(request):
     elif request.method == "POST":
         token = request.POST.get("token", None)
         if token:
+            print(token)
             if k8s.auth_check('token', token):
                 request.session['is_login'] = True
                 request.session['auth_type'] = 'token'
@@ -28,11 +75,10 @@ def login(request):
             random_str = hashlib.md5(str(random.random()).encode()).hexdigest()
             file_path = os.path.join('kubeconfig', random_str)
             try:
-                with open(file_path, 'w') as f:
-                    data = file_obj.read().decode('UTF-8')  # bytes转str
+                with open(file_path, 'w', encoding='utf8') as f:
+                    data = file_obj.read().decode()  # bytes转str
                     f.write(data)
-            except Exception as e :
-                print(e)
+            except Exception:
                 code = 1
                 msg = "文件类型错误！"
             if k8s.auth_check('kubeconfig', random_str):
@@ -47,6 +93,9 @@ def login(request):
         res = {'code': code, 'msg': msg}
         return JsonResponse(res)
 
+def logout(request):
+    request.session.flush()
+    return redirect(login)
 
 def namespace_api(request):
     code = 0
@@ -82,35 +131,19 @@ def namespace_api(request):
                 msg = "获取数据失败"
         count = len(data)
 
-        #分页
+        # 分页
         if request.GET.get('page'):
-            page=int(request.GET.get('page',1))
-            limit=int(request.GET.get('limit'))
-            start=(page-1)*limit
-            end=page*limit
-            data=data[start:end]
-        res={'code':code,'msg':msg,'count':count,'data':data}
-        return JsonResponse(res)
-    elif request.method =='DELETE':
-        request_data=QueryDict(request.body)
-        name=request_data.get('name')
-        try:
-            core_api.delete_namespace(name)
-            code =0
-            msg='namespace删除成功'
-        except Exception as e:
-            code=1
-            status=getattr(e,'status')
-            if status == 403:
-                msg='没有删除namespace权限'
-            elif status == 401:
-                msg='身份验证失败'
-            else:
-                msg='删除namespace失败'
-        res={'code':code,'msg':msg}
+            page = int(request.GET.get('page',1))
+            limit = int(request.GET.get('limit'))
+            start = (page - 1) * limit
+            end = page * limit
+            data = data[start:end]
+
+        res = {'code': code, 'msg': msg, 'count': count, 'data': data}
         return JsonResponse(res)
     elif request.method == "POST":
         name = request.POST['name']
+
         # 判断命名空间是否存在
         for ns in core_api.list_namespace().items:
             if name == ns.metadata.name:
@@ -137,13 +170,25 @@ def namespace_api(request):
                 msg = "创建失败！"
         res = {'code': code, 'msg': msg}
         return JsonResponse(res)
-def logout(request):
-    request.session.flush()
-    return redirect(index)
+    elif request.method == "DELETE":
+        request_data = QueryDict(request.body)
+        name = request_data.get("name")
+        try:
+            core_api.delete_namespace(name)
+            code = 0
+            msg = "删除成功."
+        except Exception as e:
+            code = 1
+            status = getattr(e, "status")
+            if status == 403:
+                msg = "没有删除权限"
+            else:
+                msg = "删除失败！"
+        res = {'code': code, 'msg': msg}
+        return JsonResponse(res)
 
 def namespace(request):
-    return render(request,'k8s/namespace.html')
-
+    return render(request, 'k8s/namespace.html')
 
 def export_resource_api(request):
     auth_type = request.session.get("auth_type")
@@ -151,7 +196,7 @@ def export_resource_api(request):
     k8s.load_auth_config(auth_type, token)
     core_api = client.CoreV1Api()  # namespace,pod,service,pv,pvc
     apps_api = client.AppsV1Api()  # deployment
-    networking_api = client.NetworkingV1Api()  # ingress
+    networking_api = client.NetworkingV1beta1Api()  # ingress
     storage_api = client.StorageV1Api()  # storage_class
 
     namespace = request.GET.get('namespace', None)
@@ -161,7 +206,6 @@ def export_resource_api(request):
     msg = ""
     result = ""
 
-    import yaml,json
     import yaml,json
     if resource == "namespace":
         try:
@@ -263,15 +307,6 @@ def export_resource_api(request):
         except Exception as e:
             code = 1
             msg = e
-    elif resource == "storageclass":
-        try:
-            result = storage_api.read_storage_class(name=name,_preload_content=False).read()
-       #     result = core_api.read_namespaced_config_map(name=name, namespace=namespace, _preload_content=False).read()
-            result = str(result, "utf-8")
-            result = yaml.safe_dump(json.loads(result))
-        except Exception as e:
-            code = 1
-            msg = e
     elif resource == "secret":
         try:
             result = core_api.read_namespaced_secret(name=name, namespace=namespace, _preload_content=False).read()
@@ -284,6 +319,7 @@ def export_resource_api(request):
     res = {"code": code, "msg": msg, "data": result}
     return JsonResponse(res)
 
+# Refused to display 'http://127.0.0.1:8080/ace_editor' in a frame because it set 'X-Frame-Options' to 'deny'.
 from django.views.decorators.clickjacking import xframe_options_exempt
 @xframe_options_exempt
 def ace_editor(request):
