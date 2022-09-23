@@ -52,7 +52,6 @@ def deployment_details(request):
                     service.append(data)
 
             # service没有创建，ingress也就没有  ingress->service->deployment->pod
-
             # ingress = {"rules": None, "tls": None}
             # for ing in networking_api.list_namespaced_ingress(namespace=namespace).items:
             #     for r in ing.spec.rules:
@@ -115,7 +114,7 @@ def deployment_details(request):
                        "available_replicas": available_replicas, "labels": labels,
                        "selector": selector, "containers": containers, "rs_number": rs_number,
                        "rolling_update": rolling_update, "create_time": create_time, "volumes": volumes,
-                       "tolerations": tolerations, "service": service,}
+                       "tolerations": tolerations, "service": service}
     return  render(request , 'workload/deployment_details.html', {'dp_name':dp_name, 'namespace': namespace, 'dp_info': dp_info})
 
 @k8s.self_login_required
@@ -326,7 +325,7 @@ def replicaset_api(request):
     token = request.session.get("token")
     k8s.load_auth_config(auth_type, token)
     apps_api = client.AppsV1Api()
-    apps_beta_api = client.AppsV1Api()
+    apps_beta_api = client.ExtensionsV1beta1Api()
 
     if request.method == "GET":
         dp_name = request.GET.get("name", None)
@@ -361,7 +360,7 @@ def replicaset_api(request):
         body = {"name": dp_name, "rollback_to": {"revision": reversion}}
         print(dp_name)
         try:
-           # apps_beta_api.create_namespaced_deployment_rollback(name=dp_name, namespace=namespace, body=body)
+            apps_beta_api.create_namespaced_deployment_rollback(name=dp_name, namespace=namespace, body=body)
             code = 0
             msg = "回滚成功！"
         except Exception as e:
@@ -662,3 +661,15 @@ def pod_log(request):
         log_text = "获取日志失败！"
     res = {"code": code, "msg": msg, "data": log_text}
     return JsonResponse(res)
+
+from django.views.decorators.clickjacking import xframe_options_exempt
+@xframe_options_exempt
+@k8s.self_login_required
+def terminal(request):
+    namespace = request.GET.get("namespace")
+    pod_name = request.GET.get("pod_name")
+    containers = request.GET.get("containers").split(',')  # 返回 nginx1,nginx2，转成一个列表方便前端处理
+    auth_type = request.session.get('auth_type') # 认证类型和token，用于传递到websocket，websocket根据sessionid获取token，让websocket处理连接k8s认证用
+    token = request.session.get('token')
+    connect = {'namespace': namespace, 'pod_name': pod_name, 'containers': containers, 'auth_type': auth_type, 'token': token}
+    return render(request, 'workload/terminal.html', {'connect': connect})

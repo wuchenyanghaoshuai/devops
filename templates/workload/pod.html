@@ -30,6 +30,7 @@
                 <script type="text/html" id="barDemo">
                   <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="yaml">YAML</a>
                   <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="log">查看日志</a>
+                    <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="terminal" style="color: #FFF;background-color: #385985">终端</a>
                   <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
                 </script>
             </div>
@@ -173,6 +174,23 @@ layui.use('table', function(){
             area : [ '60%', '70%' ],
             closeBtn: 1, // 关闭按钮
             content: $("#modal").html()   // form div
+        });
+    } else if(obj.event === 'terminal') {
+        // 逗号拼接容器名, 例如containers=c1,c2
+        cs = data['containers'];
+        containers = "";
+        for(let c in cs) {
+            if (c < cs.length-1) {
+                containers += cs[c]['c_name'] + ","
+            } else {
+                containers += cs[c]['c_name']
+            }
+        }
+        layer.open({
+            title: "容器终端",
+            type: 2,  // 加载层，从另一个网址引用
+            area : [ '50%', '60%' ],
+            content: '{% url "terminal" %}?namespace=' + data["namespace"] + "&pod_name=" + data["name"] + "&containers=" + containers,
         });
     }
   });
