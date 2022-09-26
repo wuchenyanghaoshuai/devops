@@ -23,9 +23,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'ym((ft#gn1!*jy(ol%#*451d-nj_wh7b2qhah*zfii-p#b4^vw'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['117.13.128.184']
 
 
 # Application definition
@@ -88,8 +88,12 @@ WSGI_APPLICATION = 'devops.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'test',
+        'USER': 'root',
+        'PASSWORD': '123456',
+        'HOST': '172.27.58.10',
+        'PORT': '3306',
     }
 }
 
